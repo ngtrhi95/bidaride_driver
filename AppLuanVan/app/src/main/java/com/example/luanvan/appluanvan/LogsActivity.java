@@ -83,7 +83,7 @@ public class LogsActivity extends AppCompatActivity {
     }
 
     public void getTripInfo(String driverID) {
-        String url = "https://fast-hollows-58498.herokuapp.com/trip/getTrip";
+        String url = "https://appluanvan-apigateway.herokuapp.com/trip/getTrip";
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
         params.put("driverID", driverID);

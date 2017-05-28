@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final Button rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
             String driverID = SharedPreferences.getString(KEY_ID, "");
-            String url = "https://fast-hollows-58498.herokuapp.com/driver/updateStatus";
+            String url = "https://appluanvan-apigateway.herokuapp.com/updateStatus";
             AsyncHttpClient client = new AsyncHttpClient();
             RequestParams params = new RequestParams();
             params.put("driverID", driverID);
