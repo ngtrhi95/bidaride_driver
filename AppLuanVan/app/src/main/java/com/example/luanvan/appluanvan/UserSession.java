@@ -45,6 +45,9 @@ public class UserSession {
     // password
     public static final String KEY_PASSWORD = "password";
 
+    //token
+    public static final String KEY_TOKEN = "token";
+
     // Constructor
     public UserSession(Context context){
         this._context = context;
@@ -53,7 +56,7 @@ public class UserSession {
     }
 
     //Create login session
-    public void createUserLoginSession(String uName, String uID, String uPhone, String uEmail, String uFname, String uPassword){
+    public void createUserLoginSession(String uName, String uID, String uPhone, String uEmail, String uFname, String uPassword, String uToken){
         // Storing login value as TRUE
         editor.putBoolean(IS_USER_LOGIN, true);
 
@@ -67,8 +70,10 @@ public class UserSession {
         editor.putString(KEY_PHONE, uPhone);
 
         editor.putString(KEY_FNAME, uFname);
-        // Storing email in preferences
+
         editor.putString(KEY_PASSWORD,  uPassword);
+
+        editor.putString(KEY_TOKEN,  uToken);
 
         // commit changes
         editor.commit();

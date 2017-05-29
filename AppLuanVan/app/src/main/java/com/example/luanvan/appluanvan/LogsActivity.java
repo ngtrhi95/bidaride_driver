@@ -27,6 +27,7 @@ import java.util.TimeZone;
 import cz.msebera.android.httpclient.Header;
 
 import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
+import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
 import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
 public class LogsActivity extends AppCompatActivity {
@@ -42,7 +43,6 @@ public class LogsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_logs);
-
 
         SharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
 
@@ -83,11 +83,12 @@ public class LogsActivity extends AppCompatActivity {
     }
 
     public void getTripInfo(String driverID) {
-        String url = "https://appluanvan-apigateway.herokuapp.com/trip/getTrip";
+        String url = "https://appluanvan-apigateway.herokuapp.com/api/trip/getTrip";
+        String token = SharedPreferences.getString(KEY_TOKEN, "");
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
         params.put("driverID", driverID);
-
+        params.put("token", token);
         RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
             public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
                 JSONArray returnData;

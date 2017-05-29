@@ -83,6 +83,7 @@ import cz.msebera.android.httpclient.Header;
 
 import static com.example.luanvan.appluanvan.UserSession.KEY_FNAME;
 import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
+import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
 import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
@@ -199,15 +200,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final Button rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
             String driverID = SharedPreferences.getString(KEY_ID, "");
-            String url = "https://appluanvan-apigateway.herokuapp.com/updateStatus";
+            String token = SharedPreferences.getString(KEY_TOKEN, "");
+            String url = "https://appluanvan-apigateway.herokuapp.com/api/updateStatus";
             AsyncHttpClient client = new AsyncHttpClient();
             RequestParams params = new RequestParams();
             params.put("driverID", driverID);
-
+            params.put("token", token);
             RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
-                    Logger.d("FUCKU1");
                     rideBtn.setText("Finish Ride");
                     rideBtnStatus = 1;
                 }
@@ -215,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                     // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                    Logger.d("FUCKU2");
 //                    String message = "";
 //                    try {
 //                        message = e.getString("message");
