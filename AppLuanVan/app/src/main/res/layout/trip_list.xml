@@ -9,15 +9,6 @@
     android:orientation="horizontal"
     android:padding="16.0dip">
 
-    <ImageView
-        android:id="@+id/app_icon"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginEnd="8.0dip"
-        android:layout_marginRight="8.0dip"
-        android:contentDescription="@null"
-        android:src="@drawable/usericon" />
-
     <LinearLayout
         android:layout_width="0.0dip"
         android:layout_height="wrap_content"
@@ -42,6 +33,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:layout_marginLeft="5dp"
                 android:src="@drawable/phoneicon"/>
             <TextView
                 android:id="@+id/phone"
@@ -58,36 +50,29 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/fromText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:layout_weight="0"
-                android:text="From"
-                android:textColor="#000000"
-                android:textStyle="bold" />
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/fromicon"/>
 
             <TextView
                 android:id="@+id/from"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
                 android:layout_weight="1"
                 android:text="from location"
                 android:textColor="#01579B" />
-
-            <TextView
-                android:id="@+id/toText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:layout_weight="0"
-                android:text="To"
-                android:textColor="#000000"
-                android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/toicon"/>
 
             <TextView
                 android:id="@+id/to"
@@ -96,13 +81,17 @@
                 android:layout_weight="1"
                 android:text="To location"
                 android:textColor="#00C853" />
-
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
             android:layout_weight="0"
             android:orientation="horizontal">
 
@@ -122,6 +111,33 @@
                 android:layout_marginLeft="3dp"
                 android:textColor="#BF360C"
                 android:textSize="12dp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="right"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="0"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/dollaricon" />
+
+            <TextView
+                android:id="@+id/price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1"
+                android:text="price"
+                android:layout_marginLeft="3dp"
+                android:textColor="#BF360C"
+                android:textStyle="bold"
+                android:textSize="12dp" />
+        </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

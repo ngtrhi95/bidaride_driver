@@ -2,6 +2,7 @@ package com.example.luanvan.appluanvan;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -49,8 +50,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.SimpleResource;
 import com.google.gson.Gson;
 import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.HttpGet;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestHandle;
 import com.loopj.android.http.RequestParams;
@@ -68,8 +71,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -85,9 +91,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.impl.entity.StrictContentLengthStrategy;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
+import cz.msebera.android.httpclient.protocol.HTTP;
 
 import static com.example.luanvan.appluanvan.UserSession.KEY_FNAME;
 import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
+import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
 import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
@@ -117,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private LocationManager locationManager;
 
-    private int rideBtnStatus = 0;
+    private static int rideBtnStatus;
 
     UserSession session;
 
@@ -202,26 +218,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void rideButtonOnClick(View v) {
-        final Button rideBtn = (Button) findViewById(R.id.btn_startRide);
+        rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
             String driverID = SharedPreferences.getString(KEY_ID, "");
-            String url = "https://appluanvan-apigateway.herokuapp.com/updateStatus";
-            AsyncHttpClient client = new AsyncHttpClient();
-            RequestParams params = new RequestParams();
-            params.put("driverID", driverID);
+            String token = SharedPreferences.getString(KEY_TOKEN, "");
+            //String url = "https://appluanvan-apigateway.herokuapp.com/api/updateStatus";
+            //https://appluanvan-apigateway.herokuapp.com/api/trip/create
 
-            RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
+
+            UpdateStatusDriver n = new UpdateStatusDriver();
+            n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
+            /*RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
-                    Logger.d("FUCKU1");
                     rideBtn.setText("Finish Ride");
                     rideBtnStatus = 1;
+
+
                 }
 
                 @Override
                 public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                     // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                    Logger.d("FUCKU2");
 //                    String message = "";
 //                    try {
 //                        message = e.getString("message");
@@ -230,11 +248,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 //                    }
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                 }
-            });
+            });*/
+
         } else {
             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
             viewGroup.removeAllViews();
             viewGroup.addView(View.inflate(this, R.layout.waiting_customer, null));
+            rideBtn.setText("Start Ride");
+            UpdateStatusDriver n = new UpdateStatusDriver();
+            n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
         }
     }
 
@@ -424,38 +446,37 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     String message = new String(body, "UTF-8");
                     Gson g = new Gson();
                     data = g.fromJson(message, Trip.class);
-                    MainActivity.this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            NotificationCompat.Builder mBuilder =
-                                    new NotificationCompat.Builder(MainActivity.this)
-                                            .setSmallIcon(R.drawable.scooter)
-                                            .setContentTitle("My notification")
-                                            .setContentText("Hello World!");
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(MainActivity.this)
+                                    .setSmallIcon(R.drawable.scooter)
+                                    .setContentTitle("Confirm")
+                                    .setPriority(Notification.PRIORITY_HIGH)
+                                    .setContentText("Có người đặt của bạn. Vui lòng xác nhận chuyến đi này!");
 // Creates an explicit intent for an Activity in your app
-                            Intent resultIntent = new Intent(MainActivity.this, LogsActivity.class);
+                    Intent resultIntent = new Intent(MainActivity.this, LogsActivity.class);
 
 // The stack builder object will contain an artificial back stack for the
 // started Activity.
 // This ensures that navigating backward from the Activity leads out of
 // your application to the Home screen.
-                            TaskStackBuilder stackBuilder = TaskStackBuilder.create(MainActivity.this);
-// Adds the back stack for the Intent (but not the Intent itself)
-                            stackBuilder.addParentStack(LogsActivity.class);
-// Adds the Intent that starts the Activity to the top of the stack
-                            stackBuilder.addNextIntent(resultIntent);
-                            PendingIntent resultPendingIntent =
-                                    stackBuilder.getPendingIntent(
-                                            0,
-                                            PendingIntent.FLAG_UPDATE_CURRENT
-                                    );
-                            mBuilder.setContentIntent(resultPendingIntent);
-                            NotificationManager mNotificationManager =
-                                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                            mBuilder.setSound(alarmSound);
+                    TaskStackBuilder stackBuilder = TaskStackBuilder.create(MainActivity.this);
+                    stackBuilder.addParentStack(LogsActivity.class);
+                    stackBuilder.addNextIntent(resultIntent);
+                    PendingIntent resultPendingIntent =
+                            stackBuilder.getPendingIntent(
+                                    0,
+                                    PendingIntent.FLAG_UPDATE_CURRENT
+                            );
+                    Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    mBuilder.setSound(alarmSound);
+                    mBuilder.setContentIntent(resultPendingIntent);
+                    NotificationManager mNotificationManager =
+                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 // mId allows you to update the notification later on.
-                            mNotificationManager.notify(0, mBuilder.build());
+                    mNotificationManager.notify(0, mBuilder.build());
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
 
                             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
                             viewGroup.removeAllViews();
@@ -470,6 +491,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     (TextView) findViewById(R.id.toM);
                             TextView time =
                                     (TextView) findViewById(R.id.timeM);
+                            TextView price =
+                                    (TextView) findViewById(R.id.costM);
                             userFullName.setText(data.getUsername());
                             if (data.getUserPhone() != null) {
                                 userPhone.setText(data.getUserPhone());
@@ -477,6 +500,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             from.setText(data.getTripFrom());
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
+                            price.setText(String.valueOf(data.getPrice()));
                         }
                     });
                 }
@@ -543,6 +567,111 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return null;
+        }
+    }
+
+    private class UpdateStatusDriver extends  AsyncTask<String, Void, String>{
+        String driverID = SharedPreferences.getString(KEY_ID, "");
+        String token = SharedPreferences.getString(KEY_TOKEN, "");
+
+        @Override
+        protected String doInBackground(String... params) {
+            URI website = null;
+            HttpClient client = new DefaultHttpClient();
+
+            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+            postParameters.add(new BasicNameValuePair("driverID", driverID));
+            postParameters.add(new BasicNameValuePair("token", token));
+            try {
+                website = new URI((String) params[0]);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            HttpPost request = new HttpPost((String)params[0]);
+            UrlEncodedFormEntity entity = null;
+            try {
+                entity = new UrlEncodedFormEntity(postParameters, HTTP.UTF_8);
+                request.setEntity(entity);
+                HttpResponse response_http = client.execute(request);
+                StringBuffer stringBuffer = new StringBuffer("");
+                BufferedReader bufferedReader = null;
+                bufferedReader = new BufferedReader(new InputStreamReader(response_http.getEntity().getContent()));
+
+                String line = "";
+                String LineSeparator = System.getProperty("line.separator");
+
+                while ((line = bufferedReader.readLine())!= null) {
+                    stringBuffer.append(line + LineSeparator);
+                }
+                bufferedReader.close();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            rideBtnStatus = 1;
+            rideBtn.setText("Finish Ride");
+
+            CreateTrip createTrip = new CreateTrip();
+            createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
+        }
+    }
+
+    private class CreateTrip  extends  AsyncTask<String, Void, String>{
+        @Override
+        protected String doInBackground(String... params) {
+            String driverID = SharedPreferences.getString(KEY_ID, "");
+            String token = SharedPreferences.getString(KEY_TOKEN, "");
+            URI website = null;
+            HttpClient client = new DefaultHttpClient();
+            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+            postParameters.add(new BasicNameValuePair("userID", data.getUserID()));
+            postParameters.add(new BasicNameValuePair("driverID", driverID));
+            postParameters.add(new BasicNameValuePair("tripFrom", data.getTripFrom()));
+            postParameters.add(new BasicNameValuePair("tripTo", data.getTripTo()));
+            postParameters.add(new BasicNameValuePair("fromLong", String.valueOf(data.getFromLong())));
+            postParameters.add(new BasicNameValuePair("fromLat", String.valueOf(data.getFromLat())));
+            postParameters.add(new BasicNameValuePair("toLong", String.valueOf(data.getToLong())));
+            postParameters.add(new BasicNameValuePair("toLat", String.valueOf(data.getToLat())));
+            postParameters.add(new BasicNameValuePair("price", String.valueOf(data.getPrice())));
+            postParameters.add(new BasicNameValuePair("token", token));
+            try {
+                website = new URI((String) params[0]);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            HttpPost request = new HttpPost((String)params[0]);
+            UrlEncodedFormEntity entity = null;
+            try {
+                entity = new UrlEncodedFormEntity(postParameters,HTTP.UTF_8);
+                request.setEntity(entity);
+                HttpResponse response_http = client.execute(request);
+
+                StringBuffer stringBuffer = new StringBuffer("");
+                BufferedReader bufferedReader = null;
+                bufferedReader = new BufferedReader(new InputStreamReader(response_http.getEntity().getContent()));
+
+                String line = "";
+                String LineSeparator = System.getProperty("line.separator");
+
+                while ((line = bufferedReader.readLine())!= null) {
+                    stringBuffer.append(line + LineSeparator);
+                }
+                bufferedReader.close();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return null;
         }
     }

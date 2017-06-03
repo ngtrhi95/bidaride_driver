@@ -11,7 +11,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Kirihara Miu on 4/7/2017.
@@ -63,6 +67,7 @@ public class TripAdapter extends BaseAdapter {
                 (TextView) rowView.findViewById(R.id.to);
         TextView time =
                 (TextView) rowView.findViewById(R.id.time);
+        TextView price = (TextView) rowView.findViewById(R.id.price);
 
         final double fromLong = trip.getFromLong();
         final double fromLat = trip.getFromLat();
@@ -74,7 +79,19 @@ public class TripAdapter extends BaseAdapter {
         userPhone.setText(trip.getUserPhone());
         from.setText(trip.getTripFrom());
         to.setText(trip.getTripTo());
-        time.setText(trip.getCreatedDate().toString());
+        DateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat outputFormat = new SimpleDateFormat("dd-MMM-yyyy");
+        String inputDateStr=trip.getCreatedDate();
+        Date date = null;
+        try {
+            date = inputFormat.parse(inputDateStr);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String outputDateStr = outputFormat.format(date);
+
+        time.setText(outputDateStr);
+        price.setText(String.valueOf(trip.getPrice()) + " VNĐ");
 
         return rowView;
     }

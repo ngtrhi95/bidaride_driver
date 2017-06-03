@@ -1,150 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp">
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="#FFF"
+    android:layout_margin="10dp"
+    android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/tvheader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:gravity="center_horizontal"
-        android:text="Customer Info"
-        android:textColor="#000000"
-        android:textSize="30sp" />
-
-    <TextView
-        android:id="@+id/userFullNameM"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:layout_weight="0"
-        android:textColor="#000000"
-        android:textSize="20sp"/>
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="20dp"
+        android:text="TRIP INFORMATION"
+        android:textAlignment="center"
+        android:textColor="#0D47A1"
+        android:textSize="36sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:layout_weight="0"
+        android:layout_marginTop="15dp"
+        android:background="#fff"
+        android:padding="5dp"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/phoneM"
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:maxWidth="150dp"
+            android:layout_marginLeft="15dp"
+            android:src="@drawable/usericon" />
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:textColor="#000000"
-            android:textSize="20sp"/>
-
+            android:orientation="vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/userFullNameM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbarAlwaysDrawHorizontalTrack="true"
+                android:layout_marginRight="15dp"
+                android:textSize="28dp"
+                android:layout_marginTop="10dp"
+                android:textStyle="bold"
+                android:textColor="#000"
+                android:text="Customer "/>
+            <TextView
+                android:id="@+id/phoneM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbarAlwaysDrawHorizontalTrack="true"
+                android:layout_marginRight="15dp"
+                android:textSize="24dp"
+                android:textColor="#000"
+                android:text="Phone "/>
+        </LinearLayout>
     </LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        android:background="#FAFAFA">
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true" >
+            <TextView
+                android:id="@+id/tvtitlecost"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="15dp"
+                android:textSize="20dp"
+                android:textColor="#000"
+                android:text="Cost: "/>
 
+            <TextView
+                android:id="@+id/costM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="15dp"
+                android:textSize="24dp"
+                android:textStyle="bold"
+                android:textColor="#000"
+                android:layout_toRightOf="@id/tvtitlecost"
+                android:text="Giá tiền " />
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true">
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/dollaricon" />
+        </RelativeLayout>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:background="#FAFAFA">
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true" >
+
+
+            <TextView
+                android:id="@+id/timeM"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="15dp"
+                android:textSize="24dp"
+                android:textStyle="bold"
+                android:textColor="#000"
+                android:text="Thời gian " />
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true">
+
+            <ImageView
+                android:id="@+id/imageView5"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/icontime" />
+        </RelativeLayout>
+    </RelativeLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/fromText"
-            android:layout_width="wrap_content"
+        android:background="#fff"
+        android:paddingLeft="15dp"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/fromicon"/>
+            <TextView
+                android:id="@+id/fromM"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000"
+                android:layout_margin="7dp"
+                android:text="From location"/>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#fff"
+        android:paddingLeft="15dp"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/toicon"/>
+            <TextView
+                android:id="@+id/toM"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000"
+                android:layout_margin="7dp"
+                android:text="To location"/>
+        </LinearLayout>
+    </LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        android:background="#FFFF">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="From"
-            android:textColor="#000000"
-            android:textSize="20sp"/>
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btn_startRide"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/button1"
+                android:text="Start Ride"
+                android:layout_marginRight="10dp"
+                android:textColor="#ffffff"
+                android:onClick="rideButtonOnClick"/>
 
-        <TextView
-            android:id="@+id/fromM"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#000000"
-            android:textSize="20sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/toText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
-            android:text="To"
-            android:textColor="#000000"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/toM"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#000000"
-            android:textSize="20sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:orientation="horizontal"
-        android:layout_marginBottom="10dp">
-
-        <TextView
-            android:id="@+id/timeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
-            android:layout_weight="0"
-            android:text="Time"
-            android:textColor="#000000"
-            android:textSize="20sp"/>
-
-        <TextView
-            android:id="@+id/timeM"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#000000"
-            android:textSize="20sp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/btn_startRide"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/button1"
-            android:text="Start Ride"
-            android:layout_marginRight="10dp"
-            android:textColor="#ffffff"
-            android:onClick="rideButtonOnClick"/>
-
-        <Button
-            android:id="@+id/btn_direction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/button1"
-            android:text="Direction"
-            android:onClick="directionBtnOnclick"
-            android:textColor="#ffffff"/>
-    </LinearLayout>
+            <Button
+                android:id="@+id/btn_direction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/button1"
+                android:text="Direction"
+                android:onClick="directionBtnOnclick"
+                android:textColor="#ffffff"/>
+        </LinearLayout>
+    </RelativeLayout>
 </LinearLayout>
