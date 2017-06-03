@@ -2,12 +2,15 @@ package com.example.luanvan.appluanvan;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -22,6 +25,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -106,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static String AMQP_URL = "amqp://imtqjgzz:LQWyhmVxKBMgV6ROObew36G07DUs6ZYZ@white-mynah-bird.rmq.cloudamqp.com/imtqjgzz";
     private static String EXCHANGE_NAME_TRIP = "trip_logs";
     private static String EXCHANGE_NAME_LOCATION = "location_logs";
+    private static String EXCHANGE_NAME_NOTIFICATION = "notification_logs";
 
     private boolean shouldLoadHomeFragOnBackPress = true;
 
@@ -115,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     UserSession session;
 
-    private Trip data[];
+    private Trip data;
 
     private Button rideBtn;
 
@@ -199,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final Button rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
             String driverID = SharedPreferences.getString(KEY_ID, "");
-            String url = "https://fast-hollows-58498.herokuapp.com/driver/updateStatus";
+            String url = "https://appluanvan-apigateway.herokuapp.com/updateStatus";
             AsyncHttpClient client = new AsyncHttpClient();
             RequestParams params = new RequestParams();
             params.put("driverID", driverID);
@@ -354,10 +360,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void directionBtnOnclick(View view) {
-        double fromlng = data[0].getFromLong();
-        double fromlat = data[0].getFromLat();
-        double tolng = data[0].getToLong();
-        double tolat = data[0].getToLat();
+        double fromlng = data.getFromLong();
+        double fromlat = data.getFromLat();
+        double tolng = data.getToLong();
+        double tolat = data.getToLat();
 
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
                 Uri.parse("http://maps.google.com/maps?saddr=" + fromlat + "," + fromlng + "&daddr=" + tolat +"," +tolng));
@@ -394,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
 
             try {
-                channel.exchangeDeclare(EXCHANGE_NAME_TRIP, "direct");
+                channel.exchangeDeclare(EXCHANGE_NAME_NOTIFICATION, "direct");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -406,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
 
             try {
-                channel.queueBind(queueName, EXCHANGE_NAME_TRIP, params[0]);
+                channel.queueBind(queueName, EXCHANGE_NAME_NOTIFICATION, params[0]);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -417,10 +423,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                            AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String message = new String(body, "UTF-8");
                     Gson g = new Gson();
-                    data = g.fromJson(message, Trip[].class);
+                    data = g.fromJson(message, Trip.class);
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            NotificationCompat.Builder mBuilder =
+                                    new NotificationCompat.Builder(MainActivity.this)
+                                            .setSmallIcon(R.drawable.scooter)
+                                            .setContentTitle("My notification")
+                                            .setContentText("Hello World!");
+// Creates an explicit intent for an Activity in your app
+                            Intent resultIntent = new Intent(MainActivity.this, LogsActivity.class);
+
+// The stack builder object will contain an artificial back stack for the
+// started Activity.
+// This ensures that navigating backward from the Activity leads out of
+// your application to the Home screen.
+                            TaskStackBuilder stackBuilder = TaskStackBuilder.create(MainActivity.this);
+// Adds the back stack for the Intent (but not the Intent itself)
+                            stackBuilder.addParentStack(LogsActivity.class);
+// Adds the Intent that starts the Activity to the top of the stack
+                            stackBuilder.addNextIntent(resultIntent);
+                            PendingIntent resultPendingIntent =
+                                    stackBuilder.getPendingIntent(
+                                            0,
+                                            PendingIntent.FLAG_UPDATE_CURRENT
+                                    );
+                            mBuilder.setContentIntent(resultPendingIntent);
+                            NotificationManager mNotificationManager =
+                                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            mBuilder.setSound(alarmSound);
+// mId allows you to update the notification later on.
+                            mNotificationManager.notify(0, mBuilder.build());
+
                             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
                             viewGroup.removeAllViews();
                             viewGroup.addView(View.inflate(MainActivity.this, R.layout.ride_info, null));
@@ -434,13 +470,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     (TextView) findViewById(R.id.toM);
                             TextView time =
                                     (TextView) findViewById(R.id.timeM);
-                            userFullName.setText(data[0].getUsername());
-                            if (data[0].getUserPhone() != null) {
-                                userPhone.setText(data[0].getUserPhone());
+                            userFullName.setText(data.getUsername());
+                            if (data.getUserPhone() != null) {
+                                userPhone.setText(data.getUserPhone());
                             }
-                            from.setText(data[0].getTripFrom());
-                            to.setText(data[0].getTripTo());
-                            time.setText(data[0].getCreatedDate().toString());
+                            from.setText(data.getTripFrom());
+                            to.setText(data.getTripTo());
+                            time.setText(data.getCreatedDate().toString());
                         }
                     });
                 }

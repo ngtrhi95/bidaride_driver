@@ -23,6 +23,7 @@ import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.ParseException;
+import cz.msebera.android.httpclient.entity.mime.content.StringBody;
 
 import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
@@ -37,13 +38,14 @@ public class Trip implements Parcelable {
     private String userPhone;
     private String tripFrom;
     private String tripTo;
-    private Date createdDate;
+    private String createdDate;
     private double fromLong;
     private double fromLat;
     private double toLong;
     private double toLat;
+    private double price;
 
-    public Trip(String tripID, String userID, String userName, String userPhone, String from, String to, double fromLong, double fromLat, double toLong, double toLat, Date time) {
+    public Trip(String tripID, String userID, String userName, String userPhone, String from, String to, double fromLong, double fromLat, double toLong, double toLat, String time, double price) {
         this.setTripID(tripID);
         this.setUserID(userID);
         this.setUsername(userName);
@@ -55,6 +57,7 @@ public class Trip implements Parcelable {
         this.setToLong(toLong);
         this.setToLat(toLat);
         this.setCreatedDate(time);
+        this.setPrice(price);
     }
 
     public String getTripID() {
@@ -105,11 +108,11 @@ public class Trip implements Parcelable {
         this.tripTo = tripTo;
     }
 
-    public Date getCreatedDate() {
+    public String getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDate) {
+    public void setCreatedDate(String createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -158,7 +161,7 @@ public class Trip implements Parcelable {
         dest.writeString(this.userPhone);
         dest.writeString(this.tripFrom);
         dest.writeString(this.tripTo);
-        dest.writeLong(this.createdDate != null ? this.createdDate.getTime() : -1);
+        dest.writeString(String.valueOf(this.createdDate != null ? this.createdDate : -1));
         dest.writeDouble(this.fromLong);
         dest.writeDouble(this.fromLat);
         dest.writeDouble(this.toLong);
@@ -173,7 +176,7 @@ public class Trip implements Parcelable {
         this.tripFrom = in.readString();
         this.tripTo = in.readString();
         long tmpCreatedDate = in.readLong();
-        this.createdDate = tmpCreatedDate == -1 ? null : new Date(tmpCreatedDate);
+        this.createdDate = String.valueOf(tmpCreatedDate == -1 ? null : new Date(tmpCreatedDate));
         this.fromLong = in.readDouble();
         this.fromLat = in.readDouble();
         this.toLong = in.readDouble();
@@ -191,4 +194,12 @@ public class Trip implements Parcelable {
             return new Trip[size];
         }
     };
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
 }

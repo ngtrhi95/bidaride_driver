@@ -83,7 +83,7 @@ public class LogsActivity extends AppCompatActivity {
     }
 
     public void getTripInfo(String driverID) {
-        String url = "https://fast-hollows-58498.herokuapp.com/trip/getTrip";
+        String url = "https://appluanvan-apigateway.herokuapp.com/trip/getTrip";
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
         params.put("driverID", driverID);
@@ -106,6 +106,7 @@ public class LogsActivity extends AppCompatActivity {
                         double fromLat = tempJSON.getDouble("fromLat");
                         double toLong = tempJSON.getDouble("toLong");
                         double toLat = tempJSON.getDouble("toLat");
+                        double price = tempJSON.getDouble("price");
 
                         String dateString = tempJSON.getString("createdDate");
 
@@ -120,7 +121,7 @@ public class LogsActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-                        Trip temp = new Trip(tripID, userID, username, userPhone, from, to, fromLong, fromLat, toLong, toLat, date);
+                        Trip temp = new Trip(tripID, userID, username, userPhone, from, to, fromLong, fromLat, toLong, toLat, date.toString(), price);
                         listTrip.add(temp);
                     }
                     displayTrips();

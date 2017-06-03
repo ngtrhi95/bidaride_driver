@@ -1,7 +1,9 @@
 package com.example.luanvan.appluanvan;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,10 +21,25 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.client.ClientProtocolException;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -44,24 +61,59 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-
+    String usernameText, passwordText;
+    int status;
     @OnClick(R.id.btnLogin) void Login() {
-        final String usernameText = username.getText().toString();
-        final String passwordText = password.getText().toString();
-        String url = "https://fast-hollows-58498.herokuapp.com/driver/login";
-        AsyncHttpClient client = new AsyncHttpClient();
-        RequestParams params = new RequestParams();
-        params.put("username", usernameText);
-        params.put("password", passwordText);
-        RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
-            public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
+        usernameText = username.getText().toString();
+        passwordText = password.getText().toString();
+        if (usernameText.length() == 0 || passwordText.length() == 0){
+            Toast.makeText(this, "Please fill in username and password!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Networking n = new Networking();
+            n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/login");
+        }
+    }
+    public  class Networking extends AsyncTask {
+        private ProgressDialog progressDialog;
+        JSONObject response;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(LoginActivity.this, "Please wait.",
+                    "Log in..!", true);
+        }
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            try {
+                response = getJson((String) params[0]);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return  null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            progressDialog.dismiss();
+            try {
+                status = response.getInt("status");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            if (status != 200) {
+                Toast.makeText(LoginActivity.this, "Username or Password is incorrect!", Toast.LENGTH_SHORT).show();
+            }
+            else {
                 JSONObject payload = null;
                 String uID = "";
                 String uPhone = "";
                 String uEmail = "";
                 String uFname = "";
                 try {
-                    payload = json.getJSONObject("payload");
+                    payload = response.getJSONObject("payload");
                     uID = payload.getString("driverID");
                     uPhone = payload.getString("driverPhone");
                     uEmail = payload.getString("driverEmail");
@@ -81,17 +133,44 @@ public class LoginActivity extends AppCompatActivity {
 
                 finish();
             }
-
-            public void onFailure(int statusCode, Header[] headers, Throwable t, JSONObject e) {
-                String message = "";
-                try {
-                    message = e.getString("message");
-                } catch (JSONException err) {
-                    Log.e("MYAPP", "JSON exception error", err);
-                }
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
+        }
     }
 
+    private JSONObject getJson(String url) throws JSONException {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost request = new HttpPost(url);
+        List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+
+
+                postParameters.add(new BasicNameValuePair("username", usernameText));
+                postParameters.add(new BasicNameValuePair("password", passwordText));
+
+
+            BufferedReader bufferedReader = null;
+            StringBuffer stringBuffer = new StringBuffer("");
+            try {
+                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(postParameters);
+                request.setEntity(entity);
+                HttpResponse response = httpClient.execute(request);
+
+                bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+
+                String line = "";
+                String LineSeparator = System.getProperty("line.separator");
+
+                while ((line = bufferedReader.readLine())!= null) {
+                    stringBuffer.append(line + LineSeparator);
+                }
+                bufferedReader.close();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return new JSONObject(stringBuffer.toString());
+
+    }
 }
