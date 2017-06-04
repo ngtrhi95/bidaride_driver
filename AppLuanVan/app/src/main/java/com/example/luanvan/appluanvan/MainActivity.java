@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     UserSession session;
 
-    private Trip data;
+    private static Trip data;
 
     private Button rideBtn;
 
@@ -251,18 +251,48 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             });*/
 
         } else {
+            data = null;
             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
             viewGroup.removeAllViews();
             viewGroup.addView(View.inflate(this, R.layout.waiting_customer, null));
             rideBtn.setText("Start Ride");
+
             UpdateStatusDriver n = new UpdateStatusDriver();
             n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
+
         }
     }
 
     private void initializeContent() {
-        ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
-        viewGroup.addView(View.inflate(this, R.layout.waiting_customer, null));
+
+        if (data != null) {
+            ViewGroup viewGroupContent = (ViewGroup) findViewById(R.id.main_content);
+            viewGroupContent.removeAllViews();
+            viewGroupContent.addView(View.inflate(MainActivity.this, R.layout.ride_info, null));
+            TextView userFullName =
+                    (TextView) findViewById(R.id.userFullNameM);
+            TextView userPhone =
+                    (TextView) findViewById(R.id.phoneM);
+            TextView from =
+                    (TextView) findViewById(R.id.fromM);
+            TextView to =
+                    (TextView) findViewById(R.id.toM);
+            TextView time =
+                    (TextView) findViewById(R.id.timeM);
+            TextView price =
+                    (TextView) findViewById(R.id.costM);
+            userFullName.setText(data.getUsername());
+            if (data.getUserPhone() != null) {
+                userPhone.setText(data.getUserPhone());
+            }
+            from.setText(data.getTripFrom());
+            to.setText(data.getTripTo());
+            time.setText(data.getCreatedDate().toString());
+            price.setText(String.valueOf(data.getPrice()));
+        } else {
+            ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
+            viewGroup.addView(View.inflate(this, R.layout.waiting_customer, null));
+        }
     }
 
     private void setUpNavigationView() {
@@ -373,7 +403,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 startActivity(new Intent(MainActivity.this, LoginActivity.class));
                 break;
             case R.id.nav_about_us:
-                drawer.closeDrawers();
+                //drawer.closeDrawers();
+                startActivity(new Intent(MainActivity.this, AboutusActivity.class));
                 break;
             default:
                 break;
@@ -388,8 +419,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         double tolat = data.getToLat();
 
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
-                Uri.parse("http://maps.google.com/maps?saddr=" + fromlat + "," + fromlng + "&daddr=" + tolat +"," +tolng));
+                Uri.parse("http://maps.google.com/maps?saddr=" + fromlat + "," + fromlng + "&daddr=" + tolat + "," + tolng));
         startActivity(intent);
+    }
+
+    public void callPhoneToCustommer(View view) {
+        Intent callIntent = new Intent(Intent.ACTION_CALL);
+        callIntent.setData(Uri.parse("tel:" + data.getUserPhone()));
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, 10);
+            return;
+        }else {
+            try{
+                startActivity(callIntent);
+            }
+            catch (android.content.ActivityNotFoundException ex){
+                Toast.makeText(getApplicationContext(),"yourActivity is not founded",Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private class ReceiveDirectLog extends AsyncTask<String, Void, String>{
@@ -451,29 +499,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     .setSmallIcon(R.drawable.scooter)
                                     .setContentTitle("Confirm")
                                     .setPriority(Notification.PRIORITY_HIGH)
-                                    .setContentText("Có người đặt của bạn. Vui lòng xác nhận chuyến đi này!");
-// Creates an explicit intent for an Activity in your app
-                    Intent resultIntent = new Intent(MainActivity.this, LogsActivity.class);
+                                    .setContentText("A customer has chosen you to be your driver. Please confirm your ride now!");
+                    Intent resultIntent = new Intent(MainActivity.this, MainActivity.class);
 
-// The stack builder object will contain an artificial back stack for the
-// started Activity.
-// This ensures that navigating backward from the Activity leads out of
-// your application to the Home screen.
                     TaskStackBuilder stackBuilder = TaskStackBuilder.create(MainActivity.this);
                     stackBuilder.addParentStack(LogsActivity.class);
                     stackBuilder.addNextIntent(resultIntent);
-                    PendingIntent resultPendingIntent =
-                            stackBuilder.getPendingIntent(
-                                    0,
-                                    PendingIntent.FLAG_UPDATE_CURRENT
-                            );
+                    PendingIntent contentIntent =
+                            PendingIntent.getActivity(MainActivity.this, 0, new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
+                    mBuilder.setContentIntent(contentIntent);
                     Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                     mBuilder.setSound(alarmSound);
-                    mBuilder.setContentIntent(resultPendingIntent);
                     NotificationManager mNotificationManager =
                             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-// mId allows you to update the notification later on.
+
                     mNotificationManager.notify(0, mBuilder.build());
+
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -500,7 +541,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             from.setText(data.getTripFrom());
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
-                            price.setText(String.valueOf(data.getPrice()));
+                            price.setText(String.valueOf(data.getPrice()) + " VNĐ");
                         }
                     });
                 }
@@ -617,11 +658,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            if (rideBtnStatus == 0) {
+                CreateTrip createTrip = new CreateTrip();
+                createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
+            }
             rideBtnStatus = 1;
             rideBtn.setText("Finish Ride");
-
-            CreateTrip createTrip = new CreateTrip();
-            createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
         }
     }
 

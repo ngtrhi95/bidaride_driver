@@ -23,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
         android:background="#fff"
+        android:onClick="callPhoneToCustommer"
         android:padding="5dp"
         android:orientation="horizontal">
 
@@ -47,17 +48,41 @@
                 android:textSize="28dp"
                 android:layout_marginTop="10dp"
                 android:textStyle="bold"
-                android:textColor="#000"
+                android:textColor="#D50000"
                 android:text="Customer "/>
-            <TextView
-                android:id="@+id/phoneM"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbarAlwaysDrawHorizontalTrack="true"
-                android:layout_marginRight="15dp"
-                android:textSize="24dp"
-                android:textColor="#000"
-                android:text="Phone "/>
+                android:id="@+id/phoneCall"
+                android:padding="5dp">
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true" >
+
+                    <TextView
+                        android:id="@+id/phoneM"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="15dp"
+                        android:textSize="24dp"
+                        android:textStyle="bold"
+                        android:textColor="#2196F3"
+                        android:text="Phone number " />
+                </RelativeLayout>
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true">
+
+                    <ImageView
+                        android:id="@+id/imageView6"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@drawable/phoneicon" />
+                </RelativeLayout>
+            </RelativeLayout>
+
         </LinearLayout>
     </LinearLayout>
     <RelativeLayout
@@ -118,7 +143,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="15dp"
                 android:textSize="24dp"
-                android:textStyle="bold"
                 android:textColor="#000"
                 android:text="Thời gian " />
         </RelativeLayout>
