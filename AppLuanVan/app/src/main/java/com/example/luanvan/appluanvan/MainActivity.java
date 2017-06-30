@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -51,6 +50,14 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.SimpleResource;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.gson.Gson;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.HttpGet;
@@ -106,9 +113,30 @@ import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
 import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
 import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
     public static android.content.SharedPreferences SharedPreferences = null;
+
+    // Google client to interact with Google API
+
+    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
+
+    private Location mLastLocation;
+
+    // Google client to interact with Google API
+    private GoogleApiClient mGoogleApiClient;
+
+    // boolean flag to toggle periodic location updates
+    private boolean mRequestingLocationUpdates = false;
+
+    private LocationRequest mLocationRequest;
+
+    // Location updates intervals in sec
+    private static int UPDATE_INTERVAL = 10000; // 10 sec
+    private static int FATEST_INTERVAL = 5000; // 5 sec
+    private static int DISPLACEMENT = 10; // 10 meters
+
 
     private NavigationView navigationView;
     private DrawerLayout drawer;
@@ -128,6 +156,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static String EXCHANGE_NAME_TRIP = "trip_logs";
     private static String EXCHANGE_NAME_LOCATION = "location_logs";
     private static String EXCHANGE_NAME_NOTIFICATION = "notification_logs";
+    private double longitude;
+    private double latitude;
 
     private boolean shouldLoadHomeFragOnBackPress = true;
 
@@ -150,32 +180,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         SharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        5000, 10, this);
-
-            } else {
-                //Request Location Permission
-
-            }
-        } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                    5000, 10, this);
-
-        }
-
         session.checkLogin();
 
-        initializeContent();
-
         String driverID = SharedPreferences.getString(KEY_ID, "");
+
+        initializeContent();
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -196,7 +205,190 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         ReceiveDirectLog tripTask = new ReceiveDirectLog();
         tripTask.execute(driverID);
+
+        // First we need to check availability of play services
+        if (checkPlayServices()) {
+
+            // Building the GoogleApi client
+            buildGoogleApiClient();
+
+            createLocationRequest();
+        }
+
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    public void run() {
+                        togglePeriodicLocationUpdates();
+                    }
+                },
+                5000);
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        checkPlayServices();
+
+        // Resuming the periodic location updates
+        if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    /**
+     * Method to toggle periodic location updates
+     * */
+    private void togglePeriodicLocationUpdates() {
+        if (!mRequestingLocationUpdates) {
+            // Changing the button text
+
+
+            mRequestingLocationUpdates = true;
+
+            // Starting the location updates
+            startLocationUpdates();
+
+            Log.d("Location", "Periodic location updates started!");
+
+        } else {
+            // Changing the button text
+
+            mRequestingLocationUpdates = false;
+
+            // Stopping the location updates
+            stopLocationUpdates();
+
+            Log.d("Loc", "Periodic location updates stopped!");
+        }
+    }
+
+    /**
+     * Creating google api client object
+     * */
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API).build();
+    }
+
+    /**
+     * Creating location request object
+     * */
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        mLocationRequest.setFastestInterval(FATEST_INTERVAL);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setSmallestDisplacement(DISPLACEMENT);
+    }
+
+    /**
+     * Method to verify google play services on the device
+     * */
+    private boolean checkPlayServices() {
+        int resultCode = GooglePlayServicesUtil
+                .isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+                        PLAY_SERVICES_RESOLUTION_REQUEST).show();
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "This device is not supported.", Toast.LENGTH_LONG)
+                        .show();
+                finish();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Starting the location updates
+     * */
+    protected void startLocationUpdates() {
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                mGoogleApiClient, mLocationRequest, (com.google.android.gms.location.LocationListener) this);
+    }
+
+    /**
+     * Stopping location updates
+     */
+    protected void stopLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, (com.google.android.gms.location.LocationListener) this);
+    }
+    /**
+     * Google api callback methods
+     */
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Log.i("location", "Connection failed: ConnectionResult.getErrorCode() = "
+                + result.getErrorCode());
+    }
+
+    @Override
+    public void onConnected(Bundle arg0) {
+
+        if (mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int arg0) {
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        // Assign the new location
+        mLastLocation = location;
+
+        Toast.makeText(getApplicationContext(), "Location changed!",
+                Toast.LENGTH_SHORT).show();
+
+        String driverID = SharedPreferences.getString(KEY_ID, "");
+        JSONObject obj = new JSONObject();
+        Toast.makeText(getApplicationContext(), "latitude:" + location.getLatitude() + ", longitude:" + location.getLongitude(), Toast.LENGTH_LONG).show();
+        try {
+            obj.put("latitude", location.getLatitude());
+            obj.put("longitude", location.getLongitude());
+            obj.put("driverID", driverID);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        String message = obj.toString();
+
+        EmitLocationLogs locationTask = new EmitLocationLogs();
+        locationTask.execute(message);
+    }
+
 
     private void loadNavHeader() {
         String fullname = SharedPreferences.getString(KEY_FNAME, "");
@@ -316,62 +508,62 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         actionBarDrawerToggle.syncState();
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        String driverID = SharedPreferences.getString(KEY_ID, "");
-
-        JSONObject obj = new JSONObject();
-
-        try {
-            obj.put("latitude", location.getLatitude());
-            obj.put("longitude", location.getLongitude());
-            obj.put("driverID", driverID);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        String message = obj.toString();
-
-        EmitLocationLogs locationTask = new EmitLocationLogs();
-        locationTask.execute(message);
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-        startActivity(intent);
-        Toast.makeText(getBaseContext(), "Gps is turned off!! ",
-                Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-    }
+//    @Override
+//    public void onLocationChanged(Location location) {
+//        String driverID = SharedPreferences.getString(KEY_ID, "");
+//
+//        JSONObject obj = new JSONObject();
+//        Toast.makeText(getApplicationContext(), "latitude:" + location.getLatitude() + ", longitude:" + location.getLongitude(), Toast.LENGTH_LONG).show();
+//        try {
+//            obj.put("latitude", location.getLatitude());
+//            obj.put("longitude", location.getLongitude());
+//            obj.put("driverID", driverID);
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+//
+//        String message = obj.toString();
+//
+//        EmitLocationLogs locationTask = new EmitLocationLogs();
+//        locationTask.execute(message);
+//    }
+//
+//    @Override
+//    public void onProviderDisabled(String provider) {
+//        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//        startActivity(intent);
+//        Toast.makeText(getBaseContext(), "Gps is turned off!! ",
+//                Toast.LENGTH_SHORT).show();
+//    }
+//
+//    @Override
+//    public void onProviderEnabled(String provider) {
+//    }
+//
+//    @Override
+//    public void onStatusChanged(String provider, int status, Bundle extras) {
+//        // TODO Auto-generated method stub
+//
+//    }
+//
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+//        switch (requestCode) {
+//            case 1: {
+//                // If request is cancelled, the result arrays are empty.
+//                if (grantResults.length > 0
+//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//
+//                } else {
+//                    // permission denied, boo! Disable the
+//                    // functionality that depends on this permission.
+//                }
+//                return;
+//            }
+//            // other 'case' lines to check for other
+//            // permissions this app might request
+//        }
+//    }
 
     @Override
     public void onBackPressed() {
