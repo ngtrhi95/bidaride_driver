@@ -369,12 +369,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Assign the new location
         mLastLocation = location;
 
-        Toast.makeText(getApplicationContext(), "Location changed!",
-                Toast.LENGTH_SHORT).show();
-
         String driverID = SharedPreferences.getString(KEY_ID, "");
         JSONObject obj = new JSONObject();
-        Toast.makeText(getApplicationContext(), "latitude:" + location.getLatitude() + ", longitude:" + location.getLongitude(), Toast.LENGTH_LONG).show();
+
         try {
             obj.put("latitude", location.getLatitude());
             obj.put("longitude", location.getLongitude());
@@ -418,36 +415,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             //https://appluanvan-apigateway.herokuapp.com/api/trip/create
 
 
-            UpdateStatusDriver n = new UpdateStatusDriver();
-            n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
-            /*RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
-                    rideBtn.setText("Finish Ride");
-                    rideBtnStatus = 1;
-
-
-                }
-
-                @Override
-                public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                    // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-//                    String message = "";
-//                    try {
-//                        message = e.getString("message");
-//                    } catch (JSONException err) {
-//                        Log.e("MYAPP", "JSON exception error", err);
-//                    }
-//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
-            });*/
+            CreateTrip createTrip = new CreateTrip();
+            createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
 
         } else {
             data = null;
+            rideBtnStatus = 0;
             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
             viewGroup.removeAllViews();
             viewGroup.addView(View.inflate(this, R.layout.waiting_customer, null));
-            rideBtn.setText("Start Ride");
 
             UpdateStatusDriver n = new UpdateStatusDriver();
             n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
@@ -846,17 +822,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             return null;
         }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            if (rideBtnStatus == 0) {
-                CreateTrip createTrip = new CreateTrip();
-                createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
-            }
-            rideBtnStatus = 1;
-            rideBtn.setText("Finish Ride");
-        }
     }
 
     private class CreateTrip  extends  AsyncTask<String, Void, String>{
@@ -907,6 +872,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
 
             return null;
+        }
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if (rideBtnStatus == 0) {
+                UpdateStatusDriver n = new UpdateStatusDriver();
+                n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
+            }
+            rideBtnStatus = 1;
+            rideBtn.setText("Finish Ride");
         }
     }
 }
