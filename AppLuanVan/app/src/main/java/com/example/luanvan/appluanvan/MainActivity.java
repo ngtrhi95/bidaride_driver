@@ -118,21 +118,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public static android.content.SharedPreferences SharedPreferences = null;
 
-    // Google client to interact with Google API
-
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
 
     private Location mLastLocation;
 
-    // Google client to interact with Google API
     private GoogleApiClient mGoogleApiClient;
 
-    // boolean flag to toggle periodic location updates
     private boolean mRequestingLocationUpdates = false;
 
     private LocationRequest mLocationRequest;
 
-    // Location updates intervals in sec
     private static int UPDATE_INTERVAL = 10000; // 10 sec
     private static int FATEST_INTERVAL = 5000; // 5 sec
     private static int DISPLACEMENT = 10; // 10 meters
@@ -206,10 +201,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ReceiveDirectLog tripTask = new ReceiveDirectLog();
         tripTask.execute(driverID);
 
-        // First we need to check availability of play services
         if (checkPlayServices()) {
 
-            // Building the GoogleApi client
             buildGoogleApiClient();
 
             createLocationRequest();
@@ -238,7 +231,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         checkPlayServices();
 
-        // Resuming the periodic location updates
         if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
             startLocationUpdates();
         }
@@ -263,31 +255,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * */
     private void togglePeriodicLocationUpdates() {
         if (!mRequestingLocationUpdates) {
-            // Changing the button text
-
-
             mRequestingLocationUpdates = true;
 
-            // Starting the location updates
             startLocationUpdates();
 
             Log.d("Location", "Periodic location updates started!");
 
         } else {
-            // Changing the button text
-
             mRequestingLocationUpdates = false;
 
-            // Stopping the location updates
             stopLocationUpdates();
 
             Log.d("Loc", "Periodic location updates stopped!");
         }
     }
 
-    /**
-     * Creating google api client object
-     * */
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -295,9 +277,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .addApi(LocationServices.API).build();
     }
 
-    /**
-     * Creating location request object
-     * */
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(UPDATE_INTERVAL);
@@ -306,9 +285,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mLocationRequest.setSmallestDisplacement(DISPLACEMENT);
     }
 
-    /**
-     * Method to verify google play services on the device
-     * */
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil
                 .isGooglePlayServicesAvailable(this);
@@ -327,24 +303,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    /**
-     * Starting the location updates
-     * */
     protected void startLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, mLocationRequest, (com.google.android.gms.location.LocationListener) this);
     }
 
-    /**
-     * Stopping location updates
-     */
     protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, (com.google.android.gms.location.LocationListener) this);
     }
-    /**
-     * Google api callback methods
-     */
+
     @Override
     public void onConnectionFailed(ConnectionResult result) {
         Log.i("location", "Connection failed: ConnectionResult.getErrorCode() = "
@@ -366,7 +334,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onLocationChanged(Location location) {
-        // Assign the new location
         mLastLocation = location;
 
         String driverID = SharedPreferences.getString(KEY_ID, "");
@@ -409,11 +376,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void rideButtonOnClick(View v) {
         rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
-            String driverID = SharedPreferences.getString(KEY_ID, "");
-            String token = SharedPreferences.getString(KEY_TOKEN, "");
-            //String url = "https://appluanvan-apigateway.herokuapp.com/api/updateStatus";
-            //https://appluanvan-apigateway.herokuapp.com/api/trip/create
-
 
             CreateTrip createTrip = new CreateTrip();
             createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
@@ -484,62 +446,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         actionBarDrawerToggle.syncState();
     }
 
-//    @Override
-//    public void onLocationChanged(Location location) {
-//        String driverID = SharedPreferences.getString(KEY_ID, "");
-//
-//        JSONObject obj = new JSONObject();
-//        Toast.makeText(getApplicationContext(), "latitude:" + location.getLatitude() + ", longitude:" + location.getLongitude(), Toast.LENGTH_LONG).show();
-//        try {
-//            obj.put("latitude", location.getLatitude());
-//            obj.put("longitude", location.getLongitude());
-//            obj.put("driverID", driverID);
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-//
-//        String message = obj.toString();
-//
-//        EmitLocationLogs locationTask = new EmitLocationLogs();
-//        locationTask.execute(message);
-//    }
-//
-//    @Override
-//    public void onProviderDisabled(String provider) {
-//        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//        startActivity(intent);
-//        Toast.makeText(getBaseContext(), "Gps is turned off!! ",
-//                Toast.LENGTH_SHORT).show();
-//    }
-//
-//    @Override
-//    public void onProviderEnabled(String provider) {
-//    }
-//
-//    @Override
-//    public void onStatusChanged(String provider, int status, Bundle extras) {
-//        // TODO Auto-generated method stub
-//
-//    }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-//        switch (requestCode) {
-//            case 1: {
-//                // If request is cancelled, the result arrays are empty.
-//                if (grantResults.length > 0
-//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//
-//                } else {
-//                    // permission denied, boo! Disable the
-//                    // functionality that depends on this permission.
-//                }
-//                return;
-//            }
-//            // other 'case' lines to check for other
-//            // permissions this app might request
-//        }
-//    }
 
     @Override
     public void onBackPressed() {
@@ -710,6 +616,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
                             price.setText(String.valueOf(data.getPrice()) + " VNĐ");
+                            new android.os.Handler().postDelayed(
+                                    new Runnable() {
+                                        public void run() {
+                                            ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
+                                            viewGroup.removeAllViews();
+                                            viewGroup.addView(View.inflate(MainActivity.this, R.layout.waiting_customer, null));
+                                        }
+                                    },
+                                    30000);
                         }
                     });
                 }

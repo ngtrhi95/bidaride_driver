@@ -1,5 +1,6 @@
 package com.example.luanvan.appluanvan;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -90,6 +91,11 @@ public class LogsActivity extends AppCompatActivity {
         params.put("driverID", driverID);
         params.put("token", token);
         RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
+            ProgressDialog progressDialog;
+            public void onStart() {
+                progressDialog = ProgressDialog.show(LogsActivity.this, "Please wait.",
+                        "Getting History..!", true);
+            }
             public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
                 JSONArray returnData;
                 try {
@@ -126,6 +132,10 @@ public class LogsActivity extends AppCompatActivity {
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
+            }
+
+            public void onFinish() {
+                progressDialog.dismiss();
             }
         });
     }
