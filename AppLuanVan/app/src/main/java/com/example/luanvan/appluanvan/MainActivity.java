@@ -214,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         togglePeriodicLocationUpdates();
                     }
                 },
-                5000);
+                1000);
     }
 
     @Override
@@ -250,9 +250,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         stopLocationUpdates();
     }
 
-    /**
-     * Method to toggle periodic location updates
-     * */
     private void togglePeriodicLocationUpdates() {
         if (!mRequestingLocationUpdates) {
             mRequestingLocationUpdates = true;

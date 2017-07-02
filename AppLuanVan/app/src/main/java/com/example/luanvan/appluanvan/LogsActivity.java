@@ -4,28 +4,44 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestHandle;
 import com.loopj.android.http.RequestParams;
+import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.client.ClientProtocolException;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
 import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
@@ -47,22 +63,18 @@ public class LogsActivity extends AppCompatActivity {
 
         SharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
 
-        String driverID = SharedPreferences.getString(KEY_ID, "");
-
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        getTripInfo(driverID);
+        Networking n = new Networking();
+        n.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/getTrip");
     }
-
+    int status;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         if(id == android.R.id.home){
@@ -83,23 +95,42 @@ public class LogsActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
     }
 
-    public void getTripInfo(String driverID) {
-        String url = "https://appluanvan-apigateway.herokuapp.com/api/trip/getTrip";
-        String token = SharedPreferences.getString(KEY_TOKEN, "");
-        AsyncHttpClient client = new AsyncHttpClient();
-        RequestParams params = new RequestParams();
-        params.put("driverID", driverID);
-        params.put("token", token);
-        RequestHandle post = client.post(url, params, new JsonHttpResponseHandler() {
-            ProgressDialog progressDialog;
-            public void onStart() {
-                progressDialog = ProgressDialog.show(LogsActivity.this, "Please wait.",
-                        "Getting History..!", true);
+    public  class Networking extends AsyncTask {
+        private ProgressDialog progressDialog;
+        JSONObject response;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog = ProgressDialog.show(LogsActivity.this, "Please wait.",
+                    "Getting History..!", true);
+        }
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            try {
+                response = getJson((String) params[0]);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            public void onSuccess(int statusCode, Header[] headers, JSONObject json) {
+            return  null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            progressDialog.dismiss();
+            try {
+                status = response.getInt("status");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            if (status != 200) {
+                Toast.makeText(LogsActivity.this, "We can't get the history, sorry...", Toast.LENGTH_SHORT).show();
+            }
+            else {
                 JSONArray returnData;
                 try {
-                    returnData = json.getJSONArray("payload");
+                    returnData = response.getJSONArray("payload");
                     for (int i = 0; i < returnData.length(); i++) {
                         JSONObject tempJSON = returnData.getJSONObject(i);
 
@@ -125,18 +156,46 @@ public class LogsActivity extends AppCompatActivity {
                     Log.e("MYAPP", "JSON exception error", err);
                 }
             }
+        }
+    }
 
-            public void onFailure(int statusCode, Header[] headers, Throwable t, JSONObject e) {
-                try {
-                    throw (t);
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }
+    private JSONObject getJson(String url) throws JSONException {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost request = new HttpPost(url);
+        List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
 
-            public void onFinish() {
-                progressDialog.dismiss();
+        String driverID = SharedPreferences.getString(KEY_ID, "");
+        String token = SharedPreferences.getString(KEY_TOKEN, "");
+
+
+        postParameters.add(new BasicNameValuePair("driverID", driverID));
+        postParameters.add(new BasicNameValuePair("token", token));
+
+
+        BufferedReader bufferedReader = null;
+        StringBuffer stringBuffer = new StringBuffer("");
+        try {
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(postParameters);
+            request.setEntity(entity);
+            HttpResponse response = httpClient.execute(request);
+
+            bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+
+            String line = "";
+            String LineSeparator = System.getProperty("line.separator");
+
+            while ((line = bufferedReader.readLine())!= null) {
+                stringBuffer.append(line + LineSeparator);
             }
-        });
+            bufferedReader.close();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new JSONObject(stringBuffer.toString());
     }
 }
