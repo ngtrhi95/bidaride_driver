@@ -617,7 +617,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
                             price.setText(String.valueOf(data.getPrice()) + " VNĐ");
-                            new android.os.Handler().postDelayed(runnable, 10000);
+                            new android.os.Handler().postDelayed(runnable, 30000);
                         }
                     });
                 }
