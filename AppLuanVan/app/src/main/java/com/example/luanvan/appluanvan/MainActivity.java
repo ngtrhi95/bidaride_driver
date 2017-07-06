@@ -166,6 +166,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private Button rideBtn;
 
+    private Runnable runnable = new Runnable() {
+        public void run() {
+            ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
+            viewGroup.removeAllViews();
+            viewGroup.addView(View.inflate(MainActivity.this, R.layout.waiting_customer, null));
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -174,6 +182,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         session = new UserSession(getApplicationContext());
 
         SharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
+
+        if  (session.isUserLoggedIn()) {
+            new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        public void run() {
+                            togglePeriodicLocationUpdates();
+                        }
+                    },
+                    1000);
+        }
 
         session.checkLogin();
 
@@ -207,14 +225,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             createLocationRequest();
         }
-
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        togglePeriodicLocationUpdates();
-                    }
-                },
-                1000);
     }
 
     @Override
@@ -242,12 +252,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
     }
 
     private void togglePeriodicLocationUpdates() {
@@ -373,7 +377,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void rideButtonOnClick(View v) {
         rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
-
             CreateTrip createTrip = new CreateTrip();
             createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
 
@@ -458,7 +461,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 return;
             }
         }
-
+        finish();
         super.onBackPressed();
     }
 
@@ -471,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 break;
             case R.id.nav_logout:
                 session.logoutUser();
+                stopLocationUpdates();
                 startActivity(new Intent(MainActivity.this, LoginActivity.class));
                 break;
             case R.id.nav_about_us:
@@ -613,15 +617,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
                             price.setText(String.valueOf(data.getPrice()) + " VNĐ");
-                            new android.os.Handler().postDelayed(
-                                    new Runnable() {
-                                        public void run() {
-                                            ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
-                                            viewGroup.removeAllViews();
-                                            viewGroup.addView(View.inflate(MainActivity.this, R.layout.waiting_customer, null));
-                                        }
-                                    },
-                                    30000);
+                            new android.os.Handler().postDelayed(runnable, 10000);
                         }
                     });
                 }
@@ -791,6 +787,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (rideBtnStatus == 0) {
                 UpdateStatusDriver n = new UpdateStatusDriver();
                 n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
+                Handler handler = new android.os.Handler();
+                handler.removeCallbacks(runnable);
+                runnable = null;
             }
             rideBtnStatus = 1;
             rideBtn.setText("Finish Ride");

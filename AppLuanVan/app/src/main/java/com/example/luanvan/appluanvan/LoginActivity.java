@@ -4,6 +4,8 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +42,8 @@ import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
 import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
+
+import static com.example.luanvan.appluanvan.MainActivity.navItemIndex;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -174,6 +178,8 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             return new JSONObject(stringBuffer.toString());
-
+    }
+    @Override
+    public void onBackPressed() {
     }
 }

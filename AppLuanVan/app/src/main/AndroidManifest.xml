@@ -25,7 +25,8 @@
         <activity
             android:name=".LoginActivity"
             android:label="Login"
-            android:theme="@style/Theme.AppCompat.NoActionBar"></activity>
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:noHistory="true"></activity>
         <activity android:name=".SettingActivity" />
         <activity android:name=".LogsActivity"
             android:label="Your Logs">
