@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
@@ -166,8 +167,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private Button rideBtn;
 
-    private Runnable runnable = new Runnable() {
-        public void run() {
+    CountDownTimer countDown = new CountDownTimer(30000, 1000) {
+        @Override
+        public void onTick(long millisUntilFinished) {
+        }
+        @Override
+        public void onFinish() {
             ViewGroup viewGroup = (ViewGroup) findViewById(R.id.main_content);
             viewGroup.removeAllViews();
             viewGroup.addView(View.inflate(MainActivity.this, R.layout.waiting_customer, null));
@@ -378,8 +383,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         rideBtn = (Button) findViewById(R.id.btn_startRide);
         if (rideBtnStatus == 0) {
             CreateTrip createTrip = new CreateTrip();
+            countDown.cancel();
             createTrip.execute("https://appluanvan-apigateway.herokuapp.com/api/trip/create");
-
         } else {
             data = null;
             rideBtnStatus = 0;
@@ -473,6 +478,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 startActivity(new Intent(MainActivity.this, LogsActivity.class));
                 break;
             case R.id.nav_logout:
+                UpdateStatusDriver n = new UpdateStatusDriver();
+                n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
                 session.logoutUser();
                 stopLocationUpdates();
                 startActivity(new Intent(MainActivity.this, LoginActivity.class));
@@ -508,6 +515,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }else {
             try{
                 startActivity(callIntent);
+                countDown.cancel();
             }
             catch (android.content.ActivityNotFoundException ex){
                 Toast.makeText(getApplicationContext(),"yourActivity is not founded",Toast.LENGTH_SHORT).show();
@@ -617,7 +625,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             to.setText(data.getTripTo());
                             time.setText(data.getCreatedDate().toString());
                             price.setText(String.valueOf(data.getPrice()) + " VNĐ");
-                            new android.os.Handler().postDelayed(runnable, 30000);
+                            countDown.start();
                         }
                     });
                 }
@@ -787,9 +795,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (rideBtnStatus == 0) {
                 UpdateStatusDriver n = new UpdateStatusDriver();
                 n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
-                Handler handler = new android.os.Handler();
-                handler.removeCallbacks(runnable);
-                runnable = null;
             }
             rideBtnStatus = 1;
             rideBtn.setText("Finish Ride");

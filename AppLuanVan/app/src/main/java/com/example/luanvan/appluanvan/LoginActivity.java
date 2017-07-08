@@ -1,6 +1,7 @@
 package com.example.luanvan.appluanvan;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -27,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,10 +45,16 @@ import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
 import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
 import cz.msebera.android.httpclient.message.BasicNameValuePair;
+import cz.msebera.android.httpclient.protocol.HTTP;
 
 import static com.example.luanvan.appluanvan.MainActivity.navItemIndex;
+import static com.example.luanvan.appluanvan.UserSession.KEY_ID;
+import static com.example.luanvan.appluanvan.UserSession.KEY_TOKEN;
+import static com.example.luanvan.appluanvan.UserSession.PREFER_NAME;
 
 public class LoginActivity extends AppCompatActivity {
+
+    public static android.content.SharedPreferences SharedPreferences = null;
 
     @BindView(R.id.btnLogin) Button btnLogin;
     @BindView(R.id.username) EditText username;
@@ -136,6 +145,9 @@ public class LoginActivity extends AppCompatActivity {
                 i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                SharedPreferences = getSharedPreferences(PREFER_NAME, Context.MODE_PRIVATE);
+                UpdateStatusDriver n = new UpdateStatusDriver();
+                n.execute("https://appluanvan-apigateway.herokuapp.com/api/driver/updateStatus");
                 startActivity(i);
 
                 finish();
@@ -181,5 +193,51 @@ public class LoginActivity extends AppCompatActivity {
     }
     @Override
     public void onBackPressed() {
+    }
+
+    private class UpdateStatusDriver extends  AsyncTask<String, Void, String>{
+
+
+        String driverID = SharedPreferences.getString(KEY_ID, "");
+        String token = SharedPreferences.getString(KEY_TOKEN, "");
+
+        @Override
+        protected String doInBackground(String... params) {
+            URI website = null;
+            HttpClient client = new DefaultHttpClient();
+
+            List<NameValuePair> postParameters = new ArrayList<NameValuePair>();
+            postParameters.add(new BasicNameValuePair("driverID", driverID));
+            postParameters.add(new BasicNameValuePair("token", token));
+            try {
+                website = new URI((String) params[0]);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            HttpPost request = new HttpPost((String)params[0]);
+            UrlEncodedFormEntity entity = null;
+            try {
+                entity = new UrlEncodedFormEntity(postParameters, HTTP.UTF_8);
+                request.setEntity(entity);
+                HttpResponse response_http = client.execute(request);
+                StringBuffer stringBuffer = new StringBuffer("");
+                BufferedReader bufferedReader = null;
+                bufferedReader = new BufferedReader(new InputStreamReader(response_http.getEntity().getContent()));
+
+                String line = "";
+                String LineSeparator = System.getProperty("line.separator");
+
+                while ((line = bufferedReader.readLine())!= null) {
+                    stringBuffer.append(line + LineSeparator);
+                }
+                bufferedReader.close();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 }
